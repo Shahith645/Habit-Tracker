@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DayTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cyan:#00ffe1;--pink:#ff2d78;--purple:#b400ff;--pl:#c87cff;--gold:#ffd700;--green:#00ff9f;
+  --bg:#0a0a12;--bgc:#0d0d1a;--bcd:#07070f;--text:#c0c0d8;--muted:#7a7a9a;
+  --bdr:rgba(0,255,225,0.13);--bdh:rgba(0,255,225,0.35);
+  --mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;
+}
+body{font-family:var(--ui);background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:var(--bcd);}::-webkit-scrollbar-thumb{background:var(--cyan);}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,225,0.01) 2px,rgba(0,255,225,0.01) 4px);pointer-events:none;z-index:9999;}
+
+/* BOOT */
+#boot{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;transition:opacity 0.6s;}
+#boot.out{opacity:0;pointer-events:none;}
+.b-logo{font-family:var(--mono);font-size:40px;color:var(--cyan);letter-spacing:10px;margin-bottom:20px;animation:glitch 3s infinite;}
+@keyframes glitch{0%,90%,100%{text-shadow:0 0 10px var(--cyan);}92%{text-shadow:-2px 0 var(--pink),2px 0 var(--cyan);}94%{text-shadow:2px 0 var(--pink),-2px 0 var(--cyan);}96%{text-shadow:-1px 0 var(--cyan),1px 0 var(--pink);}}
+.b-wrap{width:320px;height:3px;background:var(--bcd);border:1px solid var(--bdr);margin-bottom:10px;}
+.b-fill{height:100%;background:var(--cyan);width:0;transition:width .08s linear;}
+.b-txt{font-family:var(--mono);font-size:11px;color:rgba(0,255,225,0.45);letter-spacing:2px;min-height:16px;}
+
+/* SIDEBAR */
+.sb{width:210px;background:var(--bgc);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--bdr);}
+.sb-title{font-family:var(--mono);font-size:18px;color:var(--cyan);letter-spacing:4px;}
+.sb-sub{font-size:10px;color:rgba(0,255,225,0.3);letter-spacing:2px;margin-top:2px;font-family:var(--mono);}
+.sb-sec{font-size:9px;color:rgba(255,45,120,0.45);padding:12px 16px 4px;letter-spacing:2px;}
+.nav{display:flex;align-items:center;gap:9px;padding:10px 16px;font-size:13px;color:var(--muted);cursor:pointer;letter-spacing:1.5px;border-left:2px solid transparent;transition:all .15s;text-transform:uppercase;position:relative;}
+.nav:hover{color:var(--cyan);background:rgba(0,255,225,0.04);}
+.nav.on{color:var(--cyan);background:rgba(0,255,225,0.07);border-left-color:var(--cyan);}
+.nav-dot{width:6px;height:6px;border:1px solid currentColor;transform:rotate(45deg);flex-shrink:0;transition:background .15s;}
+.nav.on .nav-dot,.nav:hover .nav-dot{background:var(--cyan);}
+.nav-badge{position:absolute;right:12px;background:var(--pink);color:#fff;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:3px;min-width:16px;text-align:center;}
+.sb-bottom{margin-top:auto;border-top:1px solid var(--bdr);padding:10px 16px;display:flex;align-items:center;gap:8px;}
+.sb-pulse{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+.sb-sys{font-family:var(--mono);font-size:10px;color:rgba(0,255,225,0.4);letter-spacing:1px;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.pg{display:none;flex-direction:column;gap:14px;}
+.pg.on{display:flex;}
+
+/* TOPBAR */
+.tbar{display:flex;align-items:center;justify-content:space-between;}
+.tbar h2{font-family:var(--mono);font-size:15px;color:var(--cyan);letter-spacing:3px;font-weight:400;}
+.tbar h2::before{content:'// ';color:rgba(0,255,225,0.35);}
+.tbar-right{display:flex;align-items:center;gap:10px;}
+.dt{font-family:var(--mono);font-size:11px;color:var(--pink);letter-spacing:1px;}
+
+/* KPI */
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.kpi{background:var(--bgc);border:1px solid var(--bdr);padding:12px 14px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi:hover{border-color:var(--bdh);}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--cyan);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--cyan),transparent);}
+.kpi.pk::before{background:var(--pink);}.kpi.pk::after{background:linear-gradient(90deg,var(--pink),transparent);}
+.kpi.pp::before{background:var(--pl);}.kpi.pp::after{background:linear-gradient(90deg,var(--pl),transparent);}
+.kpi.gd::before{background:var(--gold);}.kpi.gd::after{background:linear-gradient(90deg,var(--gold),transparent);}
+.kpi.gn::before{background:var(--green);}.kpi.gn::after{background:linear-gradient(90deg,var(--green),transparent);}
+.kl{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase;}
+.kv{font-family:var(--mono);font-size:20px;color:var(--cyan);}
+.kpi.pk .kv{color:var(--pink);}.kpi.pp .kv{color:var(--pl);}.kpi.gd .kv{color:var(--gold);}.kpi.gn .kv{color:var(--green);}
+.kv span{font-size:12px;color:var(--muted);}
+.ks{font-size:10px;color:var(--pink);margin-top:3px;letter-spacing:.5px;}
+
+/* CARDS */
+.card{background:var(--bgc);border:1px solid var(--bdr);padding:14px;position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);}
+.card.pk::before{background:linear-gradient(90deg,var(--pink),transparent);}
+.card.pp::before{background:linear-gradient(90deg,var(--pl),transparent);}
+.card.gd::before{background:linear-gradient(90deg,var(--gold),transparent);}
+.card.gn::before{background:linear-gradient(90deg,var(--green),transparent);}
+.ctitle{font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.c2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.c3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.c21{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+.c12{display:grid;grid-template-columns:1fr 2fr;gap:12px;}
+
+/* BUTTONS */
+.btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:7px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s;}
+.btn:hover{background:rgba(0,255,225,0.1);}
+.btn:active{transform:scale(.97);}
+.btn.pk{border-color:var(--pink);color:var(--pink);}.btn.pk:hover{background:rgba(255,45,120,0.1);}
+.btn.pp{border-color:var(--pl);color:var(--pl);}.btn.pp:hover{background:rgba(200,124,255,0.1);}
+.btn.gd{border-color:var(--gold);color:var(--gold);}.btn.gd:hover{background:rgba(255,215,0,0.1);}
+.btn.gn{border-color:var(--green);color:var(--green);}.btn.gn:hover{background:rgba(0,255,159,0.1);}
+.btn.sm{padding:5px 10px;font-size:10px;}
+.btn.full{width:100%;margin-top:8px;}
+.btn.solid{background:var(--cyan);color:var(--bg);}
+.btn.solid:hover{background:rgba(0,255,225,0.8);}
+
+/* INPUT */
+.inp{background:var(--bcd);border:1px solid var(--bdr);color:var(--cyan);font-family:var(--mono);font-size:12px;letter-spacing:.5px;padding:8px 10px;outline:none;width:100%;transition:border-color .15s;}
+.inp::placeholder{color:var(--muted);}
+.inp:focus{border-color:var(--cyan);}
+.inp.pk:focus{border-color:var(--pink);}
+.inp-row{display:flex;gap:8px;margin-top:10px;}
+
+/* HABITS */
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.hitem{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bcd);border:1px solid var(--bdr);cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.hitem::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,255,225,0.04),transparent);transition:left .4s;}
+.hitem:hover::after{left:100%;}
+.hitem:hover{border-color:var(--cyan);}
+.hitem.done{border-color:rgba(0,255,225,0.35);background:rgba(0,255,225,0.04);}
+.hn{font-size:12px;color:var(--text);letter-spacing:.5px;text-transform:uppercase;flex:1;}
+.hitem.done .hn{color:var(--cyan);}
+.hchk{width:18px;height:18px;border:1px solid var(--cyan);transform:rotate(45deg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+.hchk.done{background:rgba(0,255,225,0.2);}
+.hchk-inner{width:8px;height:8px;background:var(--cyan);}
+.hdel{background:none;border:none;color:rgba(255,45,120,0.4);cursor:pointer;font-size:14px;padding:0 0 0 8px;transition:color .15s;}
+.hdel:hover{color:var(--pink);}
+
+/* WATER */
+.wdrops{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.wdrop{width:30px;height:30px;border:1px solid rgba(0,255,225,0.2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.wdrop.on{background:rgba(0,255,225,0.12);border-color:var(--cyan);color:var(--cyan);}
+.wdrop:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* PROGRESS BAR */
+.pbar{height:5px;background:var(--bcd);border:1px solid var(--bdr);margin:6px 0;}
+.pfill{height:100%;transition:width .4s;}
+.prow{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:2px;}
+
+/* POMODORO */
+.pom-ring{position:relative;width:160px;height:160px;margin:0 auto;}
+.pom-ring svg{transform:rotate(-90deg);}
+.pom-ring circle{fill:none;stroke-width:6;transition:stroke-dashoffset .5s linear;}
+.pom-time{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:26px;color:var(--cyan);text-align:center;}
+.pom-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:4px;}
+.pom-btns{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+.pom-sessions{display:flex;gap:6px;justify-content:center;margin-top:10px;}
+.pom-dot{width:10px;height:10px;border-radius:50%;background:var(--bdr);border:1px solid var(--bdr);transition:all .3s;}
+.pom-dot.done{background:var(--cyan);border-color:var(--cyan);}
+
+/* MOOD */
+.mood-opts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.mood-btn{padding:8px 14px;background:var(--bcd);border:1px solid var(--bdr);cursor:pointer;font-size:20px;transition:all .15s;border-radius:2px;}
+.mood-btn:hover,.mood-btn.sel{border-color:var(--cyan);background:rgba(0,255,225,0.07);}
+.mood-history{display:flex;gap:3px;margin-top:10px;align-items:flex-end;height:50px;}
+.mood-bar{flex:1;background:rgba(0,255,225,0.3);border-radius:1px 1px 0 0;min-height:4px;transition:height .3s;}
+
+/* SLEEP */
+.sleep-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+.sl-inp{background:var(--bcd);border:1px solid var(--bdr);color:var(--pl);font-family:var(--mono);font-size:16px;padding:8px;text-align:center;outline:none;width:100%;transition:border-color .15s;}
+.sl-inp:focus{border-color:var(--pl);}
+.sl-label{font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;}
+.sleep-quality{display:flex;gap:6px;margin-top:10px;}
+.sq-btn{flex:1;padding:7px;background:var(--bcd);border:1px solid var(--bdr);cursor:pointer;font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;transition:all .15s;text-align:center;}
+.sq-btn:hover,.sq-btn.sel{border-color:var(--pl);color:var(--pl);background:rgba(200,124,255,0.07);}
+
+/* HEATMAP */
+.hmap{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;margin-top:6px;}
+.hmc{aspect-ratio:1;cursor:default;transition:transform .1s;}
+.hmc:hover{transform:scale(1.3);}
+
+/* STREAKS */
+.stk-item{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:11px;}
+.stk-name{width:88px;color:var(--text);letter-spacing:.5px;text-transform:uppercase;font-size:10px;}
+.stk-track{flex:1;height:4px;background:var(--bcd);border:1px solid var(--bdr);}
+.stk-fill{height:100%;background:var(--cyan);}
+.stk-val{font-family:var(--mono);font-size:11px;color:var(--pink);min-width:28px;text-align:right;}
+
+/* INSIGHTS */
+.ins-list{display:flex;flex-direction:column;gap:6px;}
+.ins{font-size:11px;padding:7px 9px;border-left:2px solid;letter-spacing:.3px;line-height:1.5;text-transform:uppercase;}
+.ins.good{background:rgba(0,255,225,0.05);border-color:var(--cyan);color:var(--cyan);}
+.ins.warn{background:rgba(255,45,120,0.05);border-color:var(--pink);color:var(--pink);}
+.ins.info{background:rgba(180,0,255,0.05);border-color:var(--purple);color:var(--pl);}
+
+/* NOTIFICATION */
+#notif{position:fixed;top:16px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.nitem{background:var(--bgc);border:1px solid var(--cyan);padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:1px;max-width:280px;opacity:0;transform:translateX(20px);transition:all .3s;pointer-events:auto;}
+.nitem.show{opacity:1;transform:translateX(0);}
+.nitem.warn{border-color:var(--pink);color:var(--pink);}
+.nitem.info{border-color:var(--pl);color:var(--pl);}
+
+/* TRAY POPUP */
+#tray-popup{position:fixed;bottom:20px;right:20px;background:var(--bgc);border:1px solid var(--cyan);padding:14px;width:240px;z-index:9997;display:none;box-shadow:0 0 20px rgba(0,255,225,0.15);}
+#tray-popup.show{display:block;}
+.tp-title{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:2px;margin-bottom:10px;}
+
+/* THEME */
+body.light{--bg:#f0f0f0;--bgc:#e8e8e8;--bcd:#d8d8d8;--text:#1a1a2e;--muted:#555577;--bdr:rgba(0,100,200,0.2);}
+body.minimal{--cyan:#ffffff;--pink:#aaaaaa;--bg:#000000;--bgc:#0a0a0a;--bcd:#050505;--text:#888888;--muted:#444444;--bdr:rgba(255,255,255,0.08);}
+
+/* GOALS */
+.goal-item{margin-bottom:10px;}
+.goal-hdr{display:flex;justify-content:space-between;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.goal-name{color:var(--text);}
+.goal-pct{font-family:var(--mono);}
+.goal-track{height:5px;background:var(--bcd);border:1px solid var(--bdr);}
+.goal-fill{height:100%;transition:width .5s;}
+
+/* RANGE */
+.range-pills{display:flex;gap:6px;}
+.rpill{font-family:var(--mono);font-size:10px;padding:3px 10px;border:1px solid var(--bdr);color:var(--muted);cursor:pointer;letter-spacing:1px;transition:all .15s;}
+.rpill:hover{border-color:var(--cyan);color:var(--cyan);}
+.rpill.on{border-color:var(--cyan);color:var(--bg);background:var(--cyan);}
+
+/* FOCUS SPLIT */
+.fsplit{display:flex;gap:8px;margin-top:8px;}
+.fsplit-item{flex:1;text-align:center;}
+.fsplit-bar{height:60px;background:var(--bcd);border:1px solid var(--bdr);display:flex;flex-direction:column;justify-content:flex-end;}
+.fsplit-fill{transition:height .4s;}
+.fsplit-label{font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase;}
+.fsplit-val{font-family:var(--mono);font-size:10px;margin-top:2px;}
+
+/* EXPORT / SETTINGS */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bdr);font-size:13px;letter-spacing:.5px;}
+.settings-row:last-child{border-bottom:none;}
+.toggle{width:36px;height:18px;background:var(--bcd);border:1px solid var(--bdr);border-radius:9px;cursor:pointer;position:relative;transition:background .2s;}
+.toggle.on{background:rgba(0,255,225,0.3);border-color:var(--cyan);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;background:var(--muted);border-radius:50%;transition:all .2s;}
+.toggle.on::after{left:20px;background:var(--cyan);}
+
+/* CHART */
+.chart-box{position:relative;height:180px;}
+
+/* CALORIE */
+.macro-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
+.macro-item{background:var(--bcd);border:1px solid var(--bdr);padding:8px;text-align:center;}
+.macro-val{font-family:var(--mono);font-size:16px;margin-bottom:2px;}
+.macro-label{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+
+/* TASK */
+.task-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bcd);border:1px solid var(--bdr);margin-bottom:6px;cursor:pointer;transition:all .15s;}
+.task-item:hover{border-color:var(--cyan);}
+.task-item.done-t .tname{text-decoration:line-through;color:var(--muted);}
+.tname{flex:1;font-size:12px;letter-spacing:.5px;text-transform:uppercase;}
+.tpri{font-size:9px;font-family:var(--mono);padding:2px 6px;border:1px solid;margin-right:4px;}
+.tpri.high{color:var(--pink);border-color:var(--pink);}
+.tpri.med{color:var(--gold);border-color:var(--gold);}
+.tpri.low{color:var(--muted);border-color:var(--muted);}
+
+/* JOURNAL */
+textarea.jinp{background:var(--bcd);border:1px solid var(--bdr);color:var(--text);font-family:var(--mono);font-size:12px;padding:10px;width:100%;height:120px;resize:none;outline:none;line-height:1.6;letter-spacing:.3px;}
+textarea.jinp:focus{border-color:var(--cyan);}
+
+/* AI */
+.ai-msg{padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;letter-spacing:.3px;border-left:2px solid var(--cyan);background:rgba(0,255,225,0.04);color:var(--text);}
+.ai-thinking{display:flex;gap:4px;align-items:center;padding:10px;}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:aidk 1.2s infinite;}
+.ai-dot:nth-child(2){animation-delay:.2s;}
+.ai-dot:nth-child(3){animation-delay:.4s;}
+@keyframes aidk{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+
+/* TAGS */
+.tag{display:inline-block;font-size:9px;font-family:var(--mono);padding:2px 7px;border:1px solid;margin-right:4px;margin-bottom:3px;letter-spacing:1px;}
+.tag.cyan{color:var(--cyan);border-color:var(--cyan);}
+.tag.pink{color:var(--pink);border-color:var(--pink);}
+.tag.gold{color:var(--gold);border-color:var(--gold);}
+.tag.green{color:var(--green);border-color:var(--green);}
+
+select.sel{background:var(--bcd);border:1px solid var(--bdr);color:var(--cyan);font-family:var(--mono);font-size:11px;padding:6px 8px;outline:none;cursor:pointer;}
+select.sel:focus{border-color:var(--cyan);}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot">
+  <div class="b-logo">DAYTRACK</div>
+  <div class="b-wrap"><div class="b-fill" id="bfill"></div></div>
+  <div class="b-txt" id="btxt">INITIALIZING...</div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif"></div>
+
+<!-- TRAY POPUP -->
+<div id="tray-popup">
+  <div class="tp-title">// QUICK LOG</div>
+  <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">WATER TODAY</div>
+  <div class="wdrops" id="tray-water"></div>
+  <button class="btn full sm" onclick="document.getElementById('tray-popup').classList.remove('show')">CLOSE</button>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-logo">
+    <div class="sb-title">DAYTRACK</div>
+    <div class="sb-sub" id="verstr">v3.0 // ONLINE</div>
+  </div>
+  <div class="sb-sec">SYSTEM</div>
+  <div class="nav on" data-p="dashboard"><div class="nav-dot"></div>Dashboard</div>
+  <div class="nav" data-p="analytics"><div class="nav-dot"></div>Analytics</div>
+  <div class="sb-sec">MODULES</div>
+  <div class="nav" data-p="habits"><div class="nav-dot"></div>Habits</div>
+  <div class="nav" data-p="tasks"><div class="nav-dot"></div>Tasks<span class="nav-badge" id="task-badge">0</span></div>
+  <div class="nav" data-p="hydration"><div class="nav-dot"></div>Hydration</div>
+  <div class="nav" data-p="nutrition"><div class="nav-dot"></div>Nutrition</div>
+  <div class="nav" data-p="focus"><div class="nav-dot"></div>Focus</div>
+  <div class="nav" data-p="pomodoro"><div class="nav-dot"></div>Pomodoro</div>
+  <div class="nav" data-p="wellness"><div class="nav-dot"></div>Wellness</div>
+  <div class="nav" data-p="journal"><div class="nav-dot"></div>Journal</div>
+  <div class="nav" data-p="ai"><div class="nav-dot"></div>AI Intel</div>
+  <div class="nav" data-p="settings"><div class="nav-dot"></div>Settings</div>
+  <div class="sb-bottom">
+    <div class="sb-pulse"></div>
+    <span class="sb-sys">SYS ACTIVE</span>
+    <button class="btn sm pk" style="margin-left:auto;" onclick="document.getElementById('tray-popup').classList.toggle('show')">TRAY</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="pg on" id="pg-dashboard">
+  <div class="tbar">
+    <h2>Command Center</h2>
+    <div class="tbar-right">
+      <span class="dt" id="dt-label"></span>
+      <select class="sel" id="theme-sel" onchange="applyTheme(this.value)">
+        <option value="">CYBERPUNK</option>
+        <option value="minimal">MINIMAL</option>
+        <option value="light">LIGHT</option>
+      </select>
+    </div>
+  </div>
+  <div class="krow">
+    <div class="kpi"><div class="kl">Habits</div><div class="kv" id="dk-h">0<span>/0</span></div><div class="ks" id="dk-hp">0% DONE</div></div>
+    <div class="kpi pk"><div class="kl">Hydration</div><div class="kv" id="dk-w">0<span>/8</span></div><div class="ks" id="dk-wp">0% LOADED</div></div>
+    <div class="kpi pp"><div class="kl">Focus</div><div class="kv" id="dk-f">0M</div><div class="ks">GOAL: 4H</div></div>
+    <div class="kpi gd"><div class="kl">Score</div><div class="kv" id="dk-s">0</div><div class="ks" id="dk-sl">OFFLINE</div></div>
+  </div>
+  <div class="c21">
+    <div class="card">
+      <div class="ctitle">Habit Matrix</div>
+      <div class="hgrid" id="dash-hgrid"></div>
+    </div>
+    <div class="card pk">
+      <div class="ctitle">Quick Log</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:5px;">HYDRATION</div>
+      <div class="wdrops" id="dash-water"></div>
+      <div style="margin-top:12px;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:5px;">FOCUS MINS</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn pk sm" id="df-minus">-15</button>
+        <span style="font-family:var(--mono);font-size:22px;color:var(--pl);min-width:52px;" id="df-val">0</span>
+        <button class="btn pp sm" id="df-plus">+15</button>
+      </div>
+    </div>
+  </div>
+  <div class="c3">
+    <div class="card gn">
+      <div class="ctitle">Today's Tasks</div>
+      <div id="dash-tasks" style="max-height:120px;overflow-y:auto;"></div>
+    </div>
+    <div class="card gd">
+      <div class="ctitle">Mood & Sleep</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="dash-mood-display">
+        <span style="font-size:10px;color:var(--muted);letter-spacing:1px;">NO DATA YET</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;">LAST SLEEP: <span id="dash-sleep" style="color:var(--gold);font-family:var(--mono);">-- HRS</span></div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Intel Feed</div>
+      <div id="dash-insights" class="ins-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS ═══ -->
+<div class="pg" id="pg-analytics">
+  <div class="tbar">
+    <h2>Analytics Core</h2>
+    <div class="range-pills">
+      <div class="rpill on" data-r="7">7D</div>
+      <div class="rpill" data-r="30">30D</div>
+      <div class="rpill" data-r="90">90D</div>
+    </div>
+  </div>
+  <div class="krow">
+    <div class="kpi"><div class="kl">Avg Habit %</div><div class="kv" id="ak-h">--<span>%</span></div><div class="ks">30D AVG</div></div>
+    <div class="kpi pk"><div class="kl">Avg Water</div><div class="kv" id="ak-w">--<span>/8</span></div><div class="ks">DAILY</div></div>
+    <div class="kpi pp"><div class="kl">Avg Focus</div><div class="kv" id="ak-f">--<span>M</span></div><div class="ks">DAILY</div></div>
+    <div class="kpi gd"><div class="kl">Best Streak</div><div class="kv" id="ak-s">--<span>D</span></div><div class="ks">ALL TIME</div></div>
+  </div>
+  <div class="c2">
+    <div class="card">
+      <div class="ctitle">Weekly Trend</div>
+      <div class="chart-box"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card pk">
+      <div class="ctitle">Goal vs Actual</div>
+      <div class="chart-box"><canvas id="goalChart"></canvas></div>
+    </div>
+  </div>
+  <div class="c3">
+    <div class="card">
+      <div class="ctitle">Activity Heatmap</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:3px;"><span>91D AGO</span><span>TODAY</span></div>
+      <div class="hmap" id="heatmap"></div>
+      <div style="display:flex;gap:5px;align-items:center;margin-top:8px;font-size:9px;color:var(--muted);">
+        LESS
+        <div style="width:9px;height:9px;background:var(--bcd);border:1px solid var(--bdr);"></div>
+        <div style="width:9px;height:9px;background:rgba(0,255,225,0.2);border:1px solid var(--bdh);"></div>
+        <div style="width:9px;height:9px;background:rgba(0,255,225,0.55);border:1px solid var(--cyan);"></div>
+        <div style="width:9px;height:9px;background:var(--cyan);"></div>
+        MORE
+      </div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Streak Tracker</div>
+      <div id="stk-list"></div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--muted);">BEST EVER</span>
+        <span style="font-family:var(--mono);color:var(--gold);" id="best-stk">-- DAYS</span>
+      </div>
+    </div>
+    <div class="card gd">
+      <div class="ctitle">Mood Trend</div>
+      <div class="mood-history" id="mood-chart"></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px;"><span>7D AGO</span><span>TODAY</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HABITS ═══ -->
+<div class="pg" id="pg-habits">
+  <div class="tbar"><h2>Habit Matrix</h2></div>
+  <div class="c2">
+    <div class="card">
+      <div class="ctitle">Today's Protocols</div>
+      <div class="hgrid" id="habits-grid"></div>
+      <div class="inp-row">
+        <input class="inp" id="habit-inp" placeholder="NEW PROTOCOL NAME..." maxlength="35"/>
+        <button class="btn" id="habit-add">+ ADD</button>
+      </div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Completion Status</div>
+      <div style="font-family:var(--mono);font-size:36px;color:var(--cyan);text-align:center;margin:10px 0;" id="habit-pct-big">0%</div>
+      <div class="pbar"><div class="pfill" id="habit-pb" style="background:var(--cyan);width:0%;"></div></div>
+      <div class="prow"><span>0</span><span id="habit-done-count">0 / 0 DONE</span></div>
+      <div style="margin-top:12px;">
+        <div class="ctitle">Habit Tags</div>
+        <div id="habit-tags" style="margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TASKS ═══ -->
+<div class="pg" id="pg-tasks">
+  <div class="tbar"><h2>Task Queue</h2></div>
+  <div class="c12">
+    <div class="card">
+      <div class="ctitle">Add Task</div>
+      <input class="inp" id="task-inp" placeholder="TASK NAME..." style="margin-bottom:8px;"/>
+      <select class="sel" id="task-pri" style="width:100%;margin-bottom:8px;">
+        <option value="high">HIGH PRIORITY</option>
+        <option value="med" selected>MED PRIORITY</option>
+        <option value="low">LOW PRIORITY</option>
+      </select>
+      <button class="btn full" id="task-add">+ QUEUE TASK</button>
+      <div style="margin-top:14px;">
+        <div class="prow"><span style="color:var(--muted);">COMPLETE</span><span id="task-pct" style="color:var(--green);font-family:var(--mono);">0%</span></div>
+        <div class="pbar"><div class="pfill" id="task-pb" style="background:var(--green);width:0%;"></div></div>
+      </div>
+    </div>
+    <div class="card gn">
+      <div class="ctitle">Active Queue</div>
+      <div id="task-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HYDRATION ═══ -->
+<div class="pg" id="pg-hydration">
+  <div class="tbar"><h2>Hydration Log</h2></div>
+  <div class="c2">
+    <div class="card">
+      <div class="ctitle">Unit Tracker — <span id="wc" style="color:var(--cyan);font-family:var(--mono);">0</span>/8</div>
+      <div class="wdrops" id="water-drops"></div>
+      <div class="pbar" style="margin-top:10px;"><div class="pfill" id="water-bar" style="background:var(--pink);width:0%;"></div></div>
+      <div class="prow"><span>0 UNITS</span><span id="water-pct" style="color:var(--pink);font-family:var(--mono);">0%</span><span>8 UNITS</span></div>
+    </div>
+    <div class="card pk">
+      <div class="ctitle">Status</div>
+      <div id="hyd-status" style="font-family:var(--mono);font-size:28px;color:var(--pink);margin-bottom:6px;">DEFICIT</div>
+      <div id="hyd-msg" style="font-size:11px;color:var(--muted);letter-spacing:.5px;line-height:1.6;margin-bottom:12px;">LOG WATER UNITS TO TRACK HYDRATION LEVELS.</div>
+      <div class="ctitle">7-Day Trend</div>
+      <div class="chart-box" style="height:80px;"><canvas id="wTrend"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NUTRITION ═══ -->
+<div class="pg" id="pg-nutrition">
+  <div class="tbar"><h2>Nutrition Log</h2></div>
+  <div class="c2">
+    <div class="card">
+      <div class="ctitle">Log Meal</div>
+      <input class="inp pk" id="meal-inp" placeholder="MEAL NAME..." style="margin-bottom:8px;"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;">KCAL</div><input class="inp" id="n-cal" placeholder="0" type="number" style="text-align:center;"/></div>
+        <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;">PROTEIN</div><input class="inp" id="n-pro" placeholder="0g" type="number" style="text-align:center;"/></div>
+        <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;">CARBS</div><input class="inp" id="n-carb" placeholder="0g" type="number" style="text-align:center;"/></div>
+        <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;">FAT</div><input class="inp" id="n-fat" placeholder="0g" type="number" style="text-align:center;"/></div>
+      </div>
+      <button class="btn pk full" id="meal-add">+ LOG MEAL</button>
+      <div id="meal-log" style="margin-top:10px;max-height:150px;overflow-y:auto;"></div>
+    </div>
+    <div class="card pk">
+      <div class="ctitle">Daily Macros</div>
+      <div style="text-align:center;margin:8px 0;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;">CALORIES</div>
+        <div style="font-family:var(--mono);font-size:32px;color:var(--pink);" id="tot-cal">0</div>
+        <div style="font-size:10px;color:var(--muted);">/ 2000 GOAL</div>
+        <div class="pbar"><div class="pfill" id="cal-bar" style="background:var(--pink);width:0%;"></div></div>
+      </div>
+      <div class="macro-row">
+        <div class="macro-item"><div class="macro-val" style="color:var(--cyan);" id="tot-pro">0g</div><div class="macro-label">Protein</div></div>
+        <div class="macro-item"><div class="macro-val" style="color:var(--gold);" id="tot-carb">0g</div><div class="macro-label">Carbs</div></div>
+        <div class="macro-item"><div class="macro-val" style="color:var(--pl);" id="tot-fat">0g</div><div class="macro-label">Fat</div></div>
+      </div>
+      <div class="ctitle" style="margin-top:12px;">Macro Split</div>
+      <div class="chart-box" style="height:100px;"><canvas id="macroChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOCUS ═══ -->
+<div class="pg" id="pg-focus">
+  <div class="tbar"><h2>Focus Core</h2></div>
+  <div class="c2">
+    <div class="card pp">
+      <div class="ctitle">Session Logger</div>
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
+        <button class="btn pk" id="focus-minus">-15M</button>
+        <span style="font-family:var(--mono);font-size:36px;color:var(--pl);min-width:80px;" id="focus-val">0</span>
+        <span style="font-size:13px;color:var(--muted);font-family:var(--mono);">MIN</span>
+        <button class="btn pp" id="focus-plus">+15M</button>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;" id="focus-total">0H 0M TODAY</div>
+      <div class="pbar"><div class="pfill" id="focus-bar" style="background:var(--pl);width:0%;"></div></div>
+      <div class="prow"><span>0</span><span id="focus-pct" style="color:var(--pl);font-family:var(--mono);">0% OF GOAL</span><span>240M</span></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Session Breakdown</div>
+      <div class="fsplit" id="focus-split">
+        <div class="fsplit-item">
+          <div class="fsplit-bar"><div class="fsplit-fill" id="fs-deep" style="height:0%;background:var(--cyan);"></div></div>
+          <div class="fsplit-label">Deep</div>
+          <div class="fsplit-val" style="color:var(--cyan);" id="fs-deep-v">0m</div>
+        </div>
+        <div class="fsplit-item">
+          <div class="fsplit-bar"><div class="fsplit-fill" id="fs-meet" style="height:0%;background:var(--pink);"></div></div>
+          <div class="fsplit-label">Meet</div>
+          <div class="fsplit-val" style="color:var(--pink);" id="fs-meet-v">0m</div>
+        </div>
+        <div class="fsplit-item">
+          <div class="fsplit-bar"><div class="fsplit-fill" id="fs-admin" style="height:0%;background:var(--gold);"></div></div>
+          <div class="fsplit-label">Admin</div>
+          <div class="fsplit-val" style="color:var(--gold);" id="fs-admin-v">0m</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="ctitle">Split Preset</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn sm" onclick="setSplit(.6,.25,.15)">60/25/15</button>
+          <button class="btn sm" onclick="setSplit(.8,.1,.1)">80/10/10</button>
+          <button class="btn sm pk" onclick="setSplit(.5,.3,.2)">50/30/20</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ POMODORO ═══ -->
+<div class="pg" id="pg-pomodoro">
+  <div class="tbar"><h2>Pomodoro Core</h2></div>
+  <div class="c2">
+    <div class="card" style="text-align:center;">
+      <div class="ctitle">Focus Timer</div>
+      <div class="pom-ring">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="70" stroke="rgba(0,255,225,0.1)" stroke-width="6"/>
+          <circle id="pom-arc" cx="80" cy="80" r="70" stroke="var(--cyan)" stroke-width="6"
+            stroke-dasharray="439.82" stroke-dashoffset="0" stroke-linecap="round"/>
+        </svg>
+        <div class="pom-time" id="pom-time">25:00</div>
+      </div>
+      <div class="pom-label" id="pom-mode">WORK SESSION</div>
+      <div class="pom-btns">
+        <button class="btn sm pk" id="pom-reset">RESET</button>
+        <button class="btn solid" id="pom-toggle">START</button>
+        <button class="btn sm" id="pom-skip">SKIP</button>
+      </div>
+      <div class="pom-sessions" id="pom-dots"></div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Pomodoro Config</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;">WORK DURATION (MIN)</div>
+        <input class="inp" id="pom-work" type="number" value="25" min="1" max="90" style="width:80px;text-align:center;"/>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;">BREAK DURATION (MIN)</div>
+        <input class="inp" id="pom-break" type="number" value="5" min="1" max="30" style="width:80px;text-align:center;"/>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:4px;">SESSIONS BEFORE LONG BREAK</div>
+        <input class="inp" id="pom-sessions-cfg" type="number" value="4" min="2" max="8" style="width:80px;text-align:center;"/>
+      </div>
+      <button class="btn pp full sm" onclick="resetPomConfig()">APPLY CONFIG</button>
+      <div style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:10px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;">TODAY'S SESSIONS</div>
+        <div style="font-family:var(--mono);font-size:28px;color:var(--pl);" id="pom-count">0</div>
+        <div style="font-size:10px;color:var(--muted);">COMPLETED POMODOROS</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WELLNESS ═══ -->
+<div class="pg" id="pg-wellness">
+  <div class="tbar"><h2>Wellness Core</h2></div>
+  <div class="c2">
+    <div class="card gd">
+      <div class="ctitle">Mood Logger</div>
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">HOW ARE YOU FEELING?</div>
+      <div class="mood-opts">
+        <div class="mood-btn" data-m="5" onclick="setMood(5)">😄</div>
+        <div class="mood-btn" data-m="4" onclick="setMood(4)">🙂</div>
+        <div class="mood-btn" data-m="3" onclick="setMood(3)">😐</div>
+        <div class="mood-btn" data-m="2" onclick="setMood(2)">😕</div>
+        <div class="mood-btn" data-m="1" onclick="setMood(1)">😞</div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);letter-spacing:1px;">CURRENT: <span id="mood-cur" style="color:var(--gold);font-family:var(--mono);">NOT LOGGED</span></div>
+      <div style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:10px;">
+        <div class="ctitle">Energy Level</div>
+        <input type="range" id="energy-range" min="1" max="10" value="5" style="width:100%;margin:8px 0;" oninput="updateEnergy(this.value)"/>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
+          <span>LOW</span>
+          <span id="energy-val" style="color:var(--gold);font-family:var(--mono);">5/10</span>
+          <span>HIGH</span>
+        </div>
+      </div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Sleep Logger</div>
+      <div class="sleep-row">
+        <div>
+          <div class="sl-label">BEDTIME</div>
+          <input class="sl-inp" type="time" id="sleep-bed" value="23:00"/>
+        </div>
+        <div>
+          <div class="sl-label">WAKE TIME</div>
+          <input class="sl-inp" type="time" id="sleep-wake" value="07:00"/>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;">SLEEP QUALITY</div>
+        <div class="sleep-quality">
+          <div class="sq-btn" onclick="setSleepQ('poor')">POOR</div>
+          <div class="sq-btn" onclick="setSleepQ('ok')">OK</div>
+          <div class="sq-btn" onclick="setSleepQ('good')">GOOD</div>
+          <div class="sq-btn" onclick="setSleepQ('great')">GREAT</div>
+        </div>
+      </div>
+      <button class="btn pp full" style="margin-top:10px;" onclick="saveSleep()">LOG SLEEP</button>
+      <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;" id="sleep-info">-- HRS CALCULATED</div>
+      <div style="margin-top:10px;border-top:1px solid var(--bdr);padding-top:10px;">
+        <div class="ctitle">Break Reminder</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <div class="toggle" id="break-toggle" onclick="toggleBreak()"></div>
+          <span style="font-size:11px;color:var(--muted);letter-spacing:.5px;">REMIND EVERY 60 MIN</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ JOURNAL ═══ -->
+<div class="pg" id="pg-journal">
+  <div class="tbar"><h2>Journal Entry</h2></div>
+  <div class="c12">
+    <div class="card">
+      <div class="ctitle">Entry Tags</div>
+      <div style="margin-bottom:10px;">
+        <span class="tag cyan" style="cursor:pointer;" onclick="addJTag('PRODUCTIVE')">PRODUCTIVE</span>
+        <span class="tag pink" style="cursor:pointer;" onclick="addJTag('STRESSED')">STRESSED</span>
+        <span class="tag gold" style="cursor:pointer;" onclick="addJTag('CREATIVE')">CREATIVE</span>
+        <span class="tag green" style="cursor:pointer;" onclick="addJTag('FOCUSED')">FOCUSED</span>
+      </div>
+      <div id="jtags-sel" style="min-height:20px;margin-bottom:10px;"></div>
+      <div class="ctitle">Gratitude (3 things)</div>
+      <input class="inp" id="grat1" placeholder="1. I'M GRATEFUL FOR..." style="margin-bottom:6px;"/>
+      <input class="inp" id="grat2" placeholder="2. I'M GRATEFUL FOR..." style="margin-bottom:6px;"/>
+      <input class="inp" id="grat3" placeholder="3. I'M GRATEFUL FOR..."/>
+    </div>
+    <div class="card gn">
+      <div class="ctitle">Today's Log — <span id="j-date" style="color:var(--green);font-family:var(--mono);"></span></div>
+      <textarea class="jinp" id="journal-txt" placeholder="ENTER YOUR THOUGHTS, REFLECTIONS, AND OBSERVATIONS FOR TODAY..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <button class="btn gn" id="journal-save">SAVE ENTRY</button>
+        <button class="btn sm" id="journal-export">EXPORT CSV</button>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;" id="j-wc">0 WORDS</span>
+      </div>
+      <div style="margin-top:10px;border-top:1px solid var(--bdr);padding-top:10px;">
+        <div class="ctitle">Past Entries</div>
+        <div id="j-entries" style="max-height:120px;overflow-y:auto;font-size:11px;color:var(--muted);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AI INTEL ═══ -->
+<div class="pg" id="pg-ai">
+  <div class="tbar"><h2>AI Intel Engine</h2></div>
+  <div class="c12">
+    <div class="card">
+      <div class="ctitle">Quick Prompts</div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <button class="btn sm full" onclick="aiPrompt('analyse')">ANALYSE MY PATTERNS ↗</button>
+        <button class="btn sm full pk" onclick="aiPrompt('improve')">HOW TO IMPROVE SCORE ↗</button>
+        <button class="btn sm full pp" onclick="aiPrompt('habits')">HABIT RECOMMENDATIONS ↗</button>
+        <button class="btn sm full gd" onclick="aiPrompt('weekly')">WEEKLY SUMMARY ↗</button>
+        <button class="btn sm full gn" onclick="aiPrompt('sleep')">SLEEP OPTIMISATION ↗</button>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:10px;">
+        <div class="ctitle">Custom Query</div>
+        <textarea class="jinp" id="ai-custom" placeholder="ASK ANYTHING ABOUT YOUR DATA..." style="height:80px;"></textarea>
+        <button class="btn full" style="margin-top:6px;" onclick="aiCustom()">SEND QUERY ↗</button>
+      </div>
+    </div>
+    <div class="card pp">
+      <div class="ctitle">Intel Response</div>
+      <div id="ai-response" style="min-height:200px;max-height:400px;overflow-y:auto;">
+        <div class="ai-msg">SYSTEM READY. SELECT A QUICK PROMPT OR ENTER A CUSTOM QUERY TO GENERATE AI-POWERED INSIGHTS FROM YOUR TRACKER DATA.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="pg" id="pg-settings">
+  <div class="tbar"><h2>System Config</h2></div>
+  <div class="c2">
+    <div class="card">
+      <div class="ctitle">Appearance</div>
+      <div class="settings-row">
+        <span>Theme</span>
+        <select class="sel" onchange="applyTheme(this.value)">
+          <option value="">CYBERPUNK</option>
+          <option value="minimal">MINIMAL</option>
+          <option value="light">LIGHT</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <span>Scanline Effect</span>
+        <div class="toggle on" id="scanline-toggle" onclick="toggleScanline()"></div>
+      </div>
+      <div class="settings-row">
+        <span>Boot Animation</span>
+        <div class="toggle on"></div>
+      </div>
+      <div class="ctitle" style="margin-top:14px;">Goals</div>
+      <div class="settings-row">
+        <span>Daily Focus Goal (min)</span>
+        <input class="inp" id="goal-focus" type="number" value="240" style="width:70px;text-align:center;"/>
+      </div>
+      <div class="settings-row">
+        <span>Daily Water Goal</span>
+        <input class="inp" id="goal-water" type="number" value="8" style="width:70px;text-align:center;"/>
+      </div>
+      <div class="settings-row">
+        <span>Daily Calorie Goal</span>
+        <input class="inp" id="goal-cal" type="number" value="2000" style="width:70px;text-align:center;"/>
+      </div>
+      <button class="btn full" style="margin-top:10px;" onclick="saveGoals()">SAVE GOALS</button>
+    </div>
+    <div class="card pk">
+      <div class="ctitle">Notifications</div>
+      <div class="settings-row">
+        <span>Water Reminders</span>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="settings-row">
+        <span>Habit Check-ins</span>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="settings-row">
+        <span>Focus Alerts</span>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="settings-row">
+        <span>Daily Summary</span>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="ctitle" style="margin-top:14px;">Data</div>
+      <button class="btn pk full" onclick="exportData()">EXPORT ALL DATA (CSV)</button>
+      <button class="btn full" style="margin-top:8px;" onclick="exportJSON()">EXPORT JSON BACKUP</button>
+      <button class="btn sm pk full" style="margin-top:8px;" onclick="if(confirm('RESET ALL DATA?')) resetData()">RESET ALL DATA</button>
+      <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;" id="data-info">LOADING...</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+'use strict';
+
+/* ── STATE ── */
+let S = {
+  date:'', habits:[], water:0, focus_mins:0,
+  tasks:[], meals:[], mood:0, energy:5,
+  sleep_bed:'23:00', sleep_wake:'07:00', sleep_quality:'',
+  journal:'', grat:['','',''], jtags:[],
+  pom_count:0
+};
+let goals = { focus:240, water:8, cal:2000 };
+let split = { deep:.6, meet:.25, admin:.15 };
+let pomState = { running:false, work:25, brk:5, sessMax:4, sess:0, isWork:true, remaining:0, timer:null };
+let breakTimer = null;
+let charts = {};
+let jEntries = [];
+
+/* ── BOOT ── */
+(function(){
+  const msgs=['INITIALIZING SYSTEM...','LOADING NEURAL MATRICES...','SYNCING DATABASE...','CALIBRATING SENSORS...','ENGAGING MODULES...','SYSTEM ONLINE'];
+  const fill=document.getElementById('bfill'), txt=document.getElementById('btxt');
+  let p=0;
+  const iv=setInterval(()=>{
+    p+=100/msgs.length;
+    fill.style.width=Math.min(p,100)+'%';
+    txt.textContent=msgs[Math.floor(p/100*msgs.length)]||msgs[msgs.length-1];
+    if(p>=100){
+      clearInterval(iv);
+      setTimeout(()=>{
+        document.getElementById('boot').classList.add('out');
+        setTimeout(()=>document.getElementById('boot').remove(),700);
+      },400);
+    }
+  },220);
+})();
+
+/* ── INIT ── */
+async function init(){
+  const now=new Date();
+  document.getElementById('dt-label').textContent =
+    now.toLocaleString('en-US',{weekday:'short'}).toUpperCase()+' '+
+    String(now.getDate()).padStart(2,'0')+'.'+
+    String(now.getMonth()+1).padStart(2,'0')+'.'+
+    now.getFullYear()+' // '+
+    String(now.getHours()).padStart(2,'0')+':'+
+    String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('j-date').textContent=now.toISOString().split('T')[0];
+  document.getElementById('verstr').textContent='v3.0.'+Math.floor(Math.random()*99+10)+' // ONLINE';
+
+  try{ S = await window.tracker.loadToday(); } catch(e){
+    S = { date:new Date().toISOString().split('T')[0], habits:[], water:0, focus_mins:0,
+      tasks:[], meals:[], mood:0, energy:5,
+      sleep_bed:'23:00', sleep_wake:'07:00', sleep_quality:'',
+      journal:'', grat:['','',''], jtags:[], pom_count:0 };
+  }
+  if(!S.tasks) S.tasks=[];
+  if(!S.meals) S.meals=[];
+  if(!S.jtags) S.jtags=[];
+  if(!S.grat) S.grat=['','',''];
+
+  pomState.work=25; pomState.brk=5; pomState.sessMax=4;
+  resetPomTimer();
+  buildPomDots();
+  renderAll();
+  setupReminders();
+}
+
+/* ── SAVE ── */
+async function save(){
+  try{ await window.tracker.saveLog(S); } catch(e){}
+  renderAll();
+}
+
+/* ── RENDER ALL ── */
+function renderAll(){
+  renderKPIs();
+  renderHabits();
+  renderWater();
+  renderFocus();
+  renderTasks();
+  renderMeals();
+  renderInsights();
+  updateDataInfo();
+}
+
+/* ── KPIs ── */
+function renderKPIs(){
+  const done=S.habits.filter(h=>h.done).length, tot=S.habits.length||1;
+  const hp=Math.round(done/tot*100), wp=Math.round(S.water/goals.water*100);
+  const mins=S.focus_mins;
+  const score=Math.min(100,Math.round((hp*.4)+(wp*.2)+(mins/goals.focus*40)));
+  document.getElementById('dk-h').innerHTML=done+'<span>/'+S.habits.length+'</span>';
+  document.getElementById('dk-hp').textContent=hp+'% DONE';
+  document.getElementById('dk-w').innerHTML=S.water+'<span>/'+goals.water+'</span>';
+  document.getElementById('dk-wp').textContent=wp+'% LOADED';
+  document.getElementById('dk-f').textContent=mins>=60?Math.floor(mins/60)+'H '+(mins%60)+'M':mins+'M';
+  document.getElementById('dk-s').textContent=score;
+  const sl=['OFFLINE','RECRUIT','OPERATIVE','AGENT','ELITE','LEGEND'];
+  document.getElementById('dk-sl').textContent=score>=90?sl[5]:score>=75?sl[4]:score>=60?sl[3]:score>=45?sl[2]:score>=25?sl[1]:sl[0];
+  document.getElementById('ak-h').innerHTML=hp+'<span>%</span>';
+  document.getElementById('ak-w').innerHTML=S.water+'<span>/'+goals.water+'</span>';
+  document.getElementById('ak-f').innerHTML=mins+'<span>M</span>';
+}
+
+/* ── HABITS ── */
+function renderHabits(){
+  ['dash-hgrid','habits-grid'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(!S.habits.length){
+      el.innerHTML='<div style="font-size:10px;color:var(--muted);letter-spacing:1px;grid-column:span 2;padding:8px 0;">NO PROTOCOLS — ADD BELOW</div>';
+      return;
+    }
+    el.innerHTML=S.habits.map(h=>`
+      <div class="hitem ${h.done?'done':''}" onclick="toggleHabit('${h.id}')">
+        <span class="hn">${h.name}</span>
+        <div class="hchk ${h.done?'done':''}">${h.done?'<div class="hchk-inner"></div>':''}</div>
+        <button class="hdel" onclick="event.stopPropagation();deleteHabit('${h.id}')">×</button>
+      </div>`).join('');
+  });
+  const done=S.habits.filter(h=>h.done).length, tot=S.habits.length||1;
+  const p=Math.round(done/tot*100);
+  const pb=document.getElementById('habit-pb'); if(pb) pb.style.width=p+'%';
+  const pbig=document.getElementById('habit-pct-big'); if(pbig) pbig.textContent=p+'%';
+  const pdc=document.getElementById('habit-done-count'); if(pdc) pdc.textContent=done+' / '+S.habits.length+' DONE';
+  const ht=document.getElementById('habit-tags'); if(ht){
+    ht.innerHTML=S.habits.map(h=>`<span class="tag ${h.done?'cyan':'pink'}">${h.name.substring(0,10)}</span>`).join('');
+  }
+}
+
+/* ── WATER ── */
+function renderWater(){
+  ['dash-water','water-drops','tray-water'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML=Array.from({length:goals.water},(_,i)=>`
+      <div class="wdrop ${i<S.water?'on':''}" onclick="toggleWater(${i+1})">${String(i+1).padStart(2,'0')}</div>`).join('');
+  });
+  const wc=document.getElementById('wc'); if(wc) wc.textContent=S.water;
+  const wb=document.getElementById('water-bar'); if(wb) wb.style.width=Math.round(S.water/goals.water*100)+'%';
+  const wp=document.getElementById('water-pct'); if(wp) wp.textContent=Math.round(S.water/goals.water*100)+'%';
+  const hs=document.getElementById('hyd-status'), hm=document.getElementById('hyd-msg');
+  if(hs&&hm){
+    if(S.water>=goals.water){hs.textContent='OPTIMAL';hs.style.color='var(--cyan)';hm.textContent='HYDRATION GOAL ACHIEVED. NEURAL PATHWAYS FULLY LUBRICATED.';}
+    else if(S.water>=Math.floor(goals.water*.6)){hs.textContent='ADEQUATE';hs.style.color='var(--gold)';hm.textContent=(goals.water-S.water)+' MORE UNITS TO REACH OPTIMAL.';}
+    else{hs.textContent='DEFICIT';hs.style.color='var(--pink)';hm.textContent='CRITICAL: '+(goals.water-S.water)+' UNITS BELOW TARGET.';}
+  }
+}
+
+/* ── FOCUS ── */
+function renderFocus(){
+  const mins=S.focus_mins;
+  ['df-val','focus-val'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=mins;});
+  const ft=document.getElementById('focus-total'); if(ft) ft.textContent=Math.floor(mins/60)+'H '+(mins%60)+'M TODAY';
+  const fb=document.getElementById('focus-bar'); if(fb) fb.style.width=Math.min(Math.round(mins/goals.focus*100),100)+'%';
+  const fp=document.getElementById('focus-pct'); if(fp) fp.textContent=Math.round(mins/goals.focus*100)+'% OF GOAL';
+  const deepM=Math.round(mins*split.deep), meetM=Math.round(mins*split.meet), adminM=mins-deepM-meetM;
+  const setFS=(id,bId,val,max)=>{
+    const el=document.getElementById(id); if(el) el.textContent=val+'m';
+    const br=document.getElementById(bId); if(br) br.style.height=Math.min(Math.round(val/max*100),100)+'%';
+  };
+  setFS('fs-deep-v','fs-deep',deepM,goals.focus);
+  setFS('fs-meet-v','fs-meet',meetM,goals.focus);
+  setFS('fs-admin-v','fs-admin',adminM,goals.focus);
+}
+
+/* ── TASKS ── */
+function renderTasks(){
+  const pending=S.tasks.filter(t=>!t.done).length;
+  const badge=document.getElementById('task-badge');
+  if(badge) badge.textContent=pending;
+  ['task-list','dash-tasks'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(!S.tasks.length){
+      el.innerHTML='<div style="font-size:10px;color:var(--muted);letter-spacing:1px;padding:8px 0;">QUEUE EMPTY</div>';
+      return;
+    }
+    el.innerHTML=S.tasks.map(t=>`
+      <div class="task-item ${t.done?'done-t':''}" onclick="toggleTask('${t.id}')">
+        <div class="hchk ${t.done?'done':''}" style="width:14px;height:14px;">${t.done?'<div class="hchk-inner" style="width:6px;height:6px;"></div>':''}</div>
+        <span class="tpri ${t.pri}">${t.pri.toUpperCase()}</span>
+        <span class="tname">${t.name}</span>
+        <button class="hdel" onclick="event.stopPropagation();deleteTask('${t.id}')">×</button>
+      </div>`).join('');
+  });
+  const done=S.tasks.filter(t=>t.done).length, tot=S.tasks.length||1;
+  const p=Math.round(done/tot*100);
+  const pb=document.getElementById('task-pb'); if(pb) pb.style.width=p+'%';
+  const pp=document.getElementById('task-pct'); if(pp) pp.textContent=p+'%';
+}
+
+/* ── MEALS ── */
+function renderMeals(){
+  const el=document.getElementById('meal-log'); if(!el) return;
+  if(!S.meals.length){el.innerHTML='<div style="font-size:10px;color:var(--muted);letter-spacing:1px;padding:4px 0;">NO MEALS LOGGED</div>';return;}
+  el.innerHTML=S.meals.map(m=>`
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px;">
+      <span style="color:var(--text);text-transform:uppercase;letter-spacing:.5px;">${m.name}</span>
+      <span style="font-family:var(--mono);color:var(--pink);">${m.cal}kcal</span>
+    </div>`).join('');
+  const totCal=S.meals.reduce((a,m)=>a+m.cal,0);
+  const totPro=S.meals.reduce((a,m)=>a+m.pro,0);
+  const totCarb=S.meals.reduce((a,m)=>a+m.carb,0);
+  const totFat=S.meals.reduce((a,m)=>a+m.fat,0);
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('tot-cal',totCal);
+  setEl('tot-pro',totPro+'g');
+  setEl('tot-carb',totCarb+'g');
+  setEl('tot-fat',totFat+'g');
+  const cb=document.getElementById('cal-bar');
+  if(cb) cb.style.width=Math.min(Math.round(totCal/goals.cal*100),100)+'%';
+  buildMacroChart(totPro,totCarb,totFat);
+}
+
+/* ── INSIGHTS ── */
+function renderInsights(){
+  const done=S.habits.filter(h=>h.done).length, tot=S.habits.length;
+  const items=[];
+  if(tot===0) items.push({t:'info',m:'ADD HABITS TO START TRACKING PROTOCOLS'});
+  else if(done===tot) items.push({t:'good',m:'ALL PROTOCOLS COMPLETE — MAX EFFICIENCY'});
+  else items.push({t:'warn',m:(tot-done)+' PROTOCOL'+(tot-done!==1?'S':'')+' INCOMPLETE'});
+  if(S.water>=goals.water) items.push({t:'good',m:'HYDRATION GOAL ACHIEVED'});
+  else if(S.water>0) items.push({t:'warn',m:(goals.water-S.water)+' UNITS BELOW TARGET'});
+  if(S.focus_mins>=goals.focus) items.push({t:'good',m:'FOCUS GOAL CRUSHED'});
+  else if(S.focus_mins>0) items.push({t:'info',m:(goals.focus-S.focus_mins)+'M TO FOCUS GOAL'});
+  const score=Math.min(100,Math.round(((done/(tot||1))*.4*100)+(S.water/goals.water*20)+(S.focus_mins/goals.focus*40)));
+  if(score>=80) items.push({t:'good',m:'ELITE STATUS: SCORE '+score+'/100'});
+  else items.push({t:'info',m:'SCORE: '+score+'/100'});
+  const html=items.map(i=>`<div class="ins ${i.t}">${i.m}</div>`).join('');
+  ['dash-insights'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=html;});
+  const il=document.getElementById('insight-list'); if(il) il.innerHTML=html;
+  // dash mood
+  const dm=document.getElementById('dash-mood-display');
+  if(dm){
+    if(S.mood){
+      const moods=['','😞','😕','😐','🙂','😄'];
+      dm.innerHTML=`<span style="font-size:20px;">${moods[S.mood]}</span><span style="font-size:10px;color:var(--gold);font-family:var(--mono);letter-spacing:1px;">${['','BAD','LOW','OK','GOOD','GREAT'][S.mood]}</span>`;
+    } else dm.innerHTML='<span style="font-size:10px;color:var(--muted);letter-spacing:1px;">NO DATA YET</span>';
+  }
+  const ds=document.getElementById('dash-sleep');
+  if(ds) ds.textContent=calcSleep()+' HRS';
+}
+
+/* ── ACTIONS ── */
+function toggleHabit(id){
+  const h=S.habits.find(h=>h.id===id); if(h){h.done=!h.done;save();}
+}
+function deleteHabit(id){
+  S.habits=S.habits.filter(h=>h.id!==id); save();
+}
+function toggleWater(n){ S.water=S.water===n?n-1:n; save(); }
+function toggleTask(id){
+  const t=S.tasks.find(t=>t.id===id); if(t){t.done=!t.done;save();}
+}
+function deleteTask(id){
+  S.tasks=S.tasks.filter(t=>t.id!==id); save();
+}
+function setSplit(d,m,a){ split={deep:d,meet:m,admin:a}; renderFocus(); }
+function setSleepQ(q){
+  document.querySelectorAll('.sq-btn').forEach(b=>b.classList.remove('sel'));
+  event.target.classList.add('sel');
+  S.sleep_quality=q;
+}
+function setMood(m){
+  S.mood=m;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelector(`.mood-btn[data-m="${m}"]`).classList.add('sel');
+  const mc=document.getElementById('mood-cur');
+  if(mc) mc.textContent=['','BAD','LOW','OK','GOOD','GREAT'][m];
+  save();
+}
+function updateEnergy(v){
+  S.energy=parseInt(v);
+  const ev=document.getElementById('energy-val'); if(ev) ev.textContent=v+'/10';
+}
+function saveSleep(){
+  const bed=document.getElementById('sleep-bed').value;
+  const wake=document.getElementById('sleep-wake').value;
+  S.sleep_bed=bed; S.sleep_wake=wake;
+  const hrs=calcSleep();
+  const si=document.getElementById('sleep-info'); if(si) si.textContent=hrs+' HRS CALCULATED';
+  notify('SLEEP LOGGED: '+hrs+'H','good');
+  save();
+}
+function calcSleep(){
+  try{
+    const [bh,bm]=S.sleep_bed.split(':').map(Number);
+    const [wh,wm]=S.sleep_wake.split(':').map(Number);
+    let diff=(wh*60+wm)-(bh*60+bm);
+    if(diff<0) diff+=1440;
+    return (diff/60).toFixed(1);
+  }catch(e){return '--';}
+}
+function toggleBreak(){
+  const t=document.getElementById('break-toggle');
+  t.classList.toggle('on');
+  if(t.classList.contains('on')){
+    breakTimer=setInterval(()=>notify('TIME TO TAKE A BREAK! STAND UP & STRETCH','info'),3600000);
+    notify('BREAK REMINDERS ENABLED','good');
+  } else {
+    clearInterval(breakTimer);
+    notify('BREAK REMINDERS DISABLED','warn');
+  }
+}
+function addJTag(tag){
+  if(!S.jtags.includes(tag)){ S.jtags.push(tag); updateJTags(); }
+}
+function updateJTags(){
+  const el=document.getElementById('jtags-sel'); if(!el) return;
+  el.innerHTML=S.jtags.map(t=>`<span class="tag cyan" style="cursor:pointer;" onclick="removeJTag('${t}')">${t} ×</span>`).join('');
+}
+function removeJTag(t){ S.jtags=S.jtags.filter(x=>x!==t); updateJTags(); }
+function saveGoals(){
+  goals.focus=parseInt(document.getElementById('goal-focus').value)||240;
+  goals.water=parseInt(document.getElementById('goal-water').value)||8;
+  goals.cal=parseInt(document.getElementById('goal-cal').value)||2000;
+  notify('GOALS SAVED','good'); renderAll();
+}
+function applyTheme(t){
+  document.body.className=t;
+}
+function toggleScanline(){
+  const el=document.getElementById('scanline-toggle');
+  el.classList.toggle('on');
+}
+function exportData(){
+  const rows=[['Date','Habits Done','Water','Focus Mins','Mood','Score']];
+  const done=S.habits.filter(h=>h.done).length,tot=S.habits.length||1;
+  const score=Math.min(100,Math.round(((done/tot)*.4*100)+(S.water/goals.water*20)+(S.focus_mins/goals.focus*40)));
+  rows.push([S.date,done+'/'+S.habits.length,S.water,S.focus_mins,S.mood,score]);
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  downloadFile('daytrack-export.csv',csv,'text/csv');
+  notify('CSV EXPORTED','good');
+}
+function exportJSON(){
+  downloadFile('daytrack-backup.json',JSON.stringify(S,null,2),'application/json');
+  notify('JSON BACKUP EXPORTED','good');
+}
+function downloadFile(name,content,type){
+  const a=document.createElement('a');
+  a.href='data:'+type+';charset=utf-8,'+encodeURIComponent(content);
+  a.download=name; a.click();
+}
+function resetData(){
+  S.habits=[]; S.water=0; S.focus_mins=0; S.tasks=[]; S.meals=[]; S.mood=0;
+  save(); notify('DATA RESET COMPLETE','warn');
+}
+function updateDataInfo(){
+  const el=document.getElementById('data-info'); if(!el) return;
+  el.textContent=S.habits.length+' HABITS // '+S.tasks.length+' TASKS // '+S.meals.length+' MEALS // DATE: '+S.date;
+}
+
+/* ── JOURNAL ── */
+document.addEventListener('input',function(e){
+  if(e.target.id==='journal-txt'){
+    const wc=document.getElementById('j-wc');
+    if(wc) wc.textContent=e.target.value.trim().split(/\s+/).filter(Boolean).length+' WORDS';
+  }
+});
+document.getElementById('journal-save').addEventListener('click',()=>{
+  const txt=document.getElementById('journal-txt').value.trim();
+  if(!txt){notify('ENTER JOURNAL TEXT FIRST','warn');return;}
+  S.journal=txt;
+  S.grat[0]=document.getElementById('grat1').value;
+  S.grat[1]=document.getElementById('grat2').value;
+  S.grat[2]=document.getElementById('grat3').value;
+  jEntries.unshift({date:S.date,text:txt.substring(0,80)+'...'});
+  const jel=document.getElementById('j-entries');
+  if(jel) jel.innerHTML=jEntries.slice(0,5).map(e=>`
+    <div style="padding:5px 0;border-bottom:1px solid var(--bdr);">
+      <div style="color:var(--cyan);font-family:var(--mono);font-size:9px;letter-spacing:1px;">${e.date}</div>
+      <div style="margin-top:2px;">${e.text}</div>
+    </div>`).join('');
+  save(); notify('JOURNAL ENTRY SAVED','good');
+});
+document.getElementById('journal-export').addEventListener('click',()=>{
+  const rows=[['Date','Entry'],...jEntries.map(e=>[e.date,'"'+e.text+'"'])];
+  downloadFile('journal-export.csv',rows.map(r=>r.join(',')).join('\n'),'text/csv');
+  notify('JOURNAL EXPORTED','good');
+});
+
+/* ── AI INTEL ── */
+async function aiPrompt(type){
+  const prompts={
+    analyse:`Analyse these daily stats and give 3 specific insights: Habits: ${S.habits.filter(h=>h.done).length}/${S.habits.length} done, Water: ${S.water}/${goals.water} glasses, Focus: ${S.focus_mins} mins, Mood: ${S.mood}/5, Score: ${Math.round(((S.habits.filter(h=>h.done).length/(S.habits.length||1))*.4*100)+(S.water/goals.water*20)+(S.focus_mins/goals.focus*40))}/100. Be specific and actionable.`,
+    improve:`My productivity score is ${Math.round(((S.habits.filter(h=>h.done).length/(S.habits.length||1))*.4*100)+(S.water/goals.water*20)+(S.focus_mins/goals.focus*40))}/100. Habits: ${S.habits.filter(h=>h.done).length}/${S.habits.length}, Water: ${S.water}/${goals.water}, Focus: ${S.focus_mins}/${goals.focus} mins. Give 5 specific steps to improve my score. Keep it short and punchy.`,
+    habits:`I have these habits: ${S.habits.map(h=>h.name+(h.done?' (done)':' (missed)')).join(', ')}. Suggest 3 new habits I should add and explain why briefly.`,
+    weekly:`Give me a motivational weekly performance summary based on: ${S.habits.filter(h=>h.done).length}/${S.habits.length} habits, ${S.water}/${goals.water} water, ${S.focus_mins} focus mins, mood ${S.mood}/5. Keep it punchy and cyberpunk-themed.`,
+    sleep:`My sleep is: ${S.sleep_bed} bedtime, ${S.sleep_wake} wake time = ${calcSleep()} hours, quality: ${S.sleep_quality||'unlogged'}. Give 3 specific sleep optimisation tips.`
+  };
+  await runAI(prompts[type]);
+}
+async function aiCustom(){
+  const q=document.getElementById('ai-custom').value.trim();
+  if(!q){notify('ENTER A QUERY FIRST','warn');return;}
+  const ctx=`User's daily data: Habits ${S.habits.filter(h=>h.done).length}/${S.habits.length}, Water ${S.water}/${goals.water}, Focus ${S.focus_mins}min, Mood ${S.mood}/5. Question: ${q}`;
+  await runAI(ctx);
+}
+async function runAI(prompt){
+  const resp=document.getElementById('ai-response');
+  resp.innerHTML='<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:800,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const d=await r.json();
+    const txt=d.content?.[0]?.text||'NO RESPONSE';
+    resp.innerHTML='<div class="ai-msg">'+txt.replace(/\n/g,'<br>')+'</div>';
+  }catch(e){
+    resp.innerHTML='<div class="ai-msg" style="color:var(--pink);">AI MODULE OFFLINE — API CONNECTION REQUIRED</div>';
+  }
+}
+
+/* ── POMODORO ── */
+function resetPomTimer(){
+  pomState.remaining=pomState.isWork?pomState.work*60:pomState.brk*60;
+  updatePomDisplay();
+}
+function buildPomDots(){
+  const d=document.getElementById('pom-dots'); if(!d) return;
+  d.innerHTML=Array.from({length:pomState.sessMax},(_,i)=>`
+    <div class="pom-dot ${i<pomState.sess?'done':''}"></div>`).join('');
+}
+function updatePomDisplay(){
+  const m=Math.floor(pomState.remaining/60), s=pomState.remaining%60;
+  const t=document.getElementById('pom-time');
+  if(t) t.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const total=(pomState.isWork?pomState.work:pomState.brk)*60;
+  const arc=document.getElementById('pom-arc');
+  if(arc){
+    const circ=2*Math.PI*70;
+    arc.setAttribute('stroke-dasharray',circ);
+    arc.setAttribute('stroke-dashoffset',circ*(1-pomState.remaining/total));
+    arc.setAttribute('stroke',pomState.isWork?'var(--cyan)':'var(--green)');
+  }
+  const ml=document.getElementById('pom-mode');
+  if(ml) ml.textContent=pomState.isWork?'WORK SESSION':'BREAK TIME';
+}
+document.getElementById('pom-toggle').addEventListener('click',()=>{
+  const btn=document.getElementById('pom-toggle');
+  if(pomState.running){
+    clearInterval(pomState.timer);
+    pomState.running=false;
+    btn.textContent='START';
+    btn.classList.remove('pk');
+  } else {
+    pomState.running=true;
+    btn.textContent='PAUSE';
+    btn.classList.add('pk');
+    pomState.timer=setInterval(()=>{
+      pomState.remaining--;
+      updatePomDisplay();
+      if(pomState.remaining<=0){
+        clearInterval(pomState.timer);
+        pomState.running=false;
+        document.getElementById('pom-toggle').textContent='START';
+        document.getElementById('pom-toggle').classList.remove('pk');
+        if(pomState.isWork){
+          pomState.sess++;
+          S.pom_count=(S.pom_count||0)+1;
+          S.focus_mins+=pomState.work;
+          save();
+          notify('WORK SESSION COMPLETE! TIME FOR A BREAK','good');
+          if(pomState.sess>=pomState.sessMax){pomState.sess=0;}
+        } else {
+          notify('BREAK OVER — BACK TO WORK','warn');
+        }
+        pomState.isWork=!pomState.isWork;
+        resetPomTimer(); buildPomDots();
+        const pc=document.getElementById('pom-count'); if(pc) pc.textContent=S.pom_count||0;
+      }
+    },1000);
+  }
+});
+document.getElementById('pom-reset').addEventListener('click',()=>{
+  clearInterval(pomState.timer); pomState.running=false;
+  pomState.isWork=true; resetPomTimer();
+  document.getElementById('pom-toggle').textContent='START';
+  document.getElementById('pom-toggle').classList.remove('pk');
+});
+document.getElementById('pom-skip').addEventListener('click',()=>{
+  clearInterval(pomState.timer); pomState.running=false;
+  pomState.isWork=!pomState.isWork; resetPomTimer();
+  document.getElementById('pom-toggle').textContent='START';
+  document.getElementById('pom-toggle').classList.remove('pk');
+});
+function resetPomConfig(){
+  pomState.work=parseInt(document.getElementById('pom-work').value)||25;
+  pomState.brk=parseInt(document.getElementById('pom-break').value)||5;
+  pomState.sessMax=parseInt(document.getElementById('pom-sessions-cfg').value)||4;
+  clearInterval(pomState.timer); pomState.running=false;
+  pomState.isWork=true; resetPomTimer(); buildPomDots();
+  document.getElementById('pom-toggle').textContent='START';
+  notify('POMODORO CONFIG UPDATED','good');
+}
+
+/* ── CHARTS ── */
+function buildTrendChart(){
+  const ctx=document.getElementById('trendChart'); if(!ctx) return;
+  if(charts.trend) charts.trend.destroy();
+  charts.trend=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:['W1','W2','W3','W4','W5','W6','W7','W8'],
+      datasets:[
+        {label:'FOCUS HRS',data:[2,3,2.5,3.5,4,3.2,S.focus_mins/60,S.focus_mins/60],borderColor:'#c87cff',backgroundColor:'rgba(180,0,255,0.07)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#c87cff',yAxisID:'y'},
+        {label:'WATER',data:[5,6,4,7,6,5,7,S.water],borderColor:'#ff2d78',borderDash:[4,3],tension:.4,pointRadius:3,pointBackgroundColor:'#ff2d78',yAxisID:'y2'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:10},boxWidth:16}}},
+      scales:{
+        x:{grid:{color:'rgba(0,255,225,0.05)'},ticks:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:9}}},
+        y:{min:0,max:8,grid:{color:'rgba(0,255,225,0.04)'},ticks:{color:'#c87cff',font:{family:'Share Tech Mono',size:9},callback:v=>v+'h'}},
+        y2:{position:'right',min:0,max:10,grid:{display:false},ticks:{color:'#ff2d78',font:{family:'Share Tech Mono',size:9},callback:v=>v+'u'}}
+      }
+    }
+  });
+}
+function buildGoalChart(){
+  const ctx=document.getElementById('goalChart'); if(!ctx) return;
+  if(charts.goal) charts.goal.destroy();
+  const done=S.habits.filter(h=>h.done).length,tot=S.habits.length||1;
+  charts.goal=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['HABITS','WATER','FOCUS','MOOD'],
+      datasets:[
+        {label:'GOAL',data:[100,100,100,100],backgroundColor:'rgba(0,255,225,0.06)',borderColor:'rgba(0,255,225,0.15)',borderWidth:1},
+        {label:'ACTUAL',data:[Math.round(done/tot*100),Math.round(S.water/goals.water*100),Math.round(S.focus_mins/goals.focus*100),S.mood*20],
+          backgroundColor:['rgba(0,255,225,0.5)','rgba(255,45,120,0.5)','rgba(200,124,255,0.5)','rgba(255,215,0,0.5)'],
+          borderColor:['#00ffe1','#ff2d78','#c87cff','#ffd700'],borderWidth:1}
+      ]
+    },
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:10},boxWidth:12}}},
+      scales:{
+        x:{min:0,max:110,grid:{color:'rgba(0,255,225,0.04)'},ticks:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:9},callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{color:'#00ffe1',font:{family:'Share Tech Mono',size:9}}}
+      }
+    }
+  });
+}
+function buildWaterTrend(){
+  const ctx=document.getElementById('wTrend'); if(!ctx) return;
+  if(charts.water) charts.water.destroy();
+  const days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const data=[6,7,5,8,6,4,S.water];
+  charts.water=new Chart(ctx,{
+    type:'bar',
+    data:{labels:days,datasets:[{data,backgroundColor:data.map(v=>v>=8?'rgba(0,255,225,0.7)':v>=5?'rgba(255,45,120,0.4)':'rgba(255,45,120,0.2)'),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:8}}},
+        y:{min:0,max:10,grid:{color:'rgba(0,255,225,0.04)'},ticks:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:8}}}}}
+  });
+}
+function buildMoodChart(){
+  const ctx=document.getElementById('mood-chart'); if(!ctx) return;
+  const moodData=[3,4,3,5,4,3,S.mood||3];
+  ctx.innerHTML='';
+  moodData.forEach(m=>{
+    const b=document.createElement('div');
+    b.className='mood-bar';
+    b.style.height=(m/5*100)+'%';
+    const col=['','#ff2d78','#ff2d78','#ffd700','#00ffe1','#00ff9f'][m];
+    b.style.background=col;
+    ctx.appendChild(b);
+  });
+}
+function buildHeatmap(){
+  const grid=document.getElementById('heatmap'); if(!grid) return;
+  grid.innerHTML='';
+  const cols=['var(--bcd)','rgba(0,255,225,0.15)','rgba(0,255,225,0.4)','rgba(0,255,225,0.7)','var(--cyan)'];
+  for(let i=0;i<91;i++){
+    const v=Math.random(), lv=v<.2?0:v<.4?1:v<.6?2:v<.8?3:4;
+    const c=document.createElement('div');
+    c.className='hmc';
+    c.style.background=cols[lv];
+    if(lv>0)c.style.border='1px solid rgba(0,255,225,0.2)';
+    grid.appendChild(c);
+  }
+}
+function buildStreaks(){
+  const el=document.getElementById('stk-list'); if(!el) return;
+  if(!S.habits.length){el.innerHTML='<div style="font-size:10px;color:var(--muted);">LOG HABITS TO BUILD STREAKS</div>';return;}
+  const cols=['var(--cyan)','var(--pink)','var(--pl)','var(--gold)','var(--green)'];
+  const streaks=S.habits.map((h,i)=>({name:h.name,days:Math.floor(Math.random()*20)+1,col:cols[i%5]}));
+  const max=Math.max(...streaks.map(s=>s.days));
+  el.innerHTML=streaks.slice(0,5).map(s=>`
+    <div class="stk-item">
+      <span class="stk-name">${s.name.substring(0,12)}</span>
+      <div class="stk-track"><div class="stk-fill" style="width:${Math.round(s.days/max*100)}%;background:${s.col};"></div></div>
+      <span class="stk-val" style="color:${s.col};">${s.days}D</span>
+    </div>`).join('');
+  const bs=Math.max(...streaks.map(s=>s.days));
+  document.getElementById('ak-s').innerHTML=bs+'<span>D</span>';
+  const bse=document.getElementById('best-stk'); if(bse) bse.textContent=bs+' DAYS';
+}
+function buildMacroChart(pro,carb,fat){
+  const ctx=document.getElementById('macroChart'); if(!ctx) return;
+  if(charts.macro) charts.macro.destroy();
+  if(pro+carb+fat===0) return;
+  charts.macro=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['PROTEIN','CARBS','FAT'],
+      datasets:[{data:[pro,carb,fat],backgroundColor:['rgba(0,255,225,0.6)','rgba(255,215,0,0.6)','rgba(200,124,255,0.6)'],borderColor:['#00ffe1','#ffd700','#c87cff'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7a7a9a',font:{family:'Share Tech Mono',size:9},boxWidth:10}}},cutout:'65%'}
+  });
+}
+function loadAnalytics(){
+  buildTrendChart(); buildGoalChart(); buildHeatmap(); buildStreaks(); buildMoodChart();
+}
+
+/* ── NAV ── */
+document.querySelectorAll('.nav[data-p]').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+    document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+    item.classList.add('on');
+    const pg=document.getElementById('pg-'+item.dataset.p);
+    if(pg) pg.classList.add('on');
+    if(item.dataset.p==='analytics') loadAnalytics();
+    if(item.dataset.p==='hydration') buildWaterTrend();
+  });
+});
+document.querySelectorAll('.rpill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('.rpill').forEach(x=>x.classList.remove('on'));
+    p.classList.add('on'); loadAnalytics();
+  });
+});
+
+/* ── EVENTS ── */
+document.getElementById('habit-add').addEventListener('click',()=>{
+  const inp=document.getElementById('habit-inp');
+  const name=inp.value.trim().toUpperCase(); if(!name) return;
+  S.habits.push({id:Date.now().toString(),name,done:false});
+  inp.value=''; save(); notify('PROTOCOL ADDED: '+name,'good');
+});
+document.getElementById('habit-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('habit-add').click(); });
+document.getElementById('task-add').addEventListener('click',()=>{
+  const inp=document.getElementById('task-inp'), pri=document.getElementById('task-pri');
+  const name=inp.value.trim().toUpperCase(); if(!name) return;
+  S.tasks.push({id:Date.now().toString(),name,pri:pri.value,done:false});
+  inp.value=''; save(); notify('TASK QUEUED: '+name,'good');
+});
+document.getElementById('task-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('task-add').click(); });
+document.getElementById('meal-add').addEventListener('click',()=>{
+  const name=document.getElementById('meal-inp').value.trim().toUpperCase(); if(!name) return;
+  S.meals.push({
+    id:Date.now().toString(), name,
+    cal:parseInt(document.getElementById('n-cal').value)||0,
+    pro:parseInt(document.getElementById('n-pro').value)||0,
+    carb:parseInt(document.getElementById('n-carb').value)||0,
+    fat:parseInt(document.getElementById('n-fat').value)||0
+  });
+  document.getElementById('meal-inp').value='';
+  ['n-cal','n-pro','n-carb','n-fat'].forEach(id=>document.getElementById(id).value='');
+  save(); notify('MEAL LOGGED','good');
+});
+document.getElementById('focus-plus').addEventListener('click',()=>{ S.focus_mins+=15; save(); });
+document.getElementById('focus-minus').addEventListener('click',()=>{ S.focus_mins=Math.max(0,S.focus_mins-15); save(); });
+document.getElementById('df-plus').addEventListener('click',()=>{ S.focus_mins+=15; save(); });
+document.getElementById('df-minus').addEventListener('click',()=>{ S.focus_mins=Math.max(0,S.focus_mins-15); save(); });
+document.getElementById('sleep-bed').addEventListener('change',()=>{ const s=document.getElementById('sleep-info'); if(s) s.textContent=calcSleep()+' HRS CALCULATED'; });
+document.getElementById('sleep-wake').addEventListener('change',()=>{ const s=document.getElementById('sleep-info'); if(s) s.textContent=calcSleep()+' HRS CALCULATED'; });
+
+/* ── NOTIFICATIONS ── */
+function notify(msg,type='good'){
+  const c=document.getElementById('notif');
+  const n=document.createElement('div');
+  n.className='nitem '+(type==='warn'?'warn':type==='info'?'info':'');
+  n.textContent=msg;
+  c.appendChild(n);
+  requestAnimationFrame(()=>n.classList.add('show'));
+  setTimeout(()=>{n.classList.remove('show');setTimeout(()=>n.remove(),400);},3000);
+}
+
+/* ── REMINDERS ── */
+function setupReminders(){
+  setInterval(()=>{
+    if(S.water<goals.water) notify('HYDRATION ALERT: LOG YOUR WATER UNITS','warn');
+  },3600000);
+  setInterval(()=>{
+    const done=S.habits.filter(h=>h.done).length,tot=S.habits.length;
+    if(tot>0&&done<tot) notify('HABIT CHECK: '+(tot-done)+' PROTOCOLS INCOMPLETE','info');
+  },7200000);
+}
+
+init();
+</script>
+</body>
+</html>
